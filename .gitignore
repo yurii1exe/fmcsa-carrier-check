@@ -30,11 +30,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — everything except the template. There must never be a real
+# FMCSA_WEB_KEY in this repository, in any commit, including a reverted one.
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# working notes, not a repo artifact
+PORTFOLIO-PLAN.md
 
 # typescript
 *.tsbuildinfo
