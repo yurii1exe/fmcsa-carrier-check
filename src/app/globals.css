@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * A deliberately small token set. The page is a compliance readout, so the
+ * palette exists to separate severities and nothing else.
+ *
+ * Severity colours are chosen for contrast against their own surfaces at both
+ * schemes, but colour is never the only carrier of meaning — every flag also
+ * has a text severity label. Brokers read these on a phone in a yard.
+ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --foreground: #0f172a;
+  --muted: #475569;
+  --border: #cbd5e1;
+  --accent: #1d4ed8;
+
+  --critical: #b91c1c;
+  --critical-surface: #fef2f2;
+  --warning: #a16207;
+  --warning-surface: #fefce8;
+  --ok: #15803d;
+  --ok-surface: #f0fdf4;
+  --info: #1e40af;
+  --info-surface: #eff6ff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #020617;
+    --surface: #0f172a;
+    --surface-muted: #1e293b;
+    --foreground: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #334155;
+    --accent: #60a5fa;
+
+    --critical: #fca5a5;
+    --critical-surface: #2a1113;
+    --warning: #fcd34d;
+    --warning-surface: #291f07;
+    --ok: #86efac;
+    --ok-surface: #0a2417;
+    --info: #93c5fd;
+    --info-surface: #0d1c38;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-critical: var(--critical);
+  --color-critical-surface: var(--critical-surface);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-ok: var(--ok);
+  --color-ok-surface: var(--ok-surface);
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/* A visible focus ring everywhere, including for mouse users. This form gets
+   used quickly and repeatedly; losing the caret costs more than the ring. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

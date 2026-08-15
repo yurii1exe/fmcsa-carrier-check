@@ -1,103 +1,168 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import { headers } from "next/headers";
+import type { Metadata } from "next";
 
-export default function Home() {
+import { SearchForm } from "@/components/SearchForm";
+import { CarrierReport } from "@/components/CarrierReport";
+import { ErrorPanel, InvalidInputPanel } from "@/components/ErrorPanel";
+import { ReportSkeleton } from "@/components/ReportSkeleton";
+import { lookupCarrier } from "@/lib/fmcsa/client";
+import { parseCarrierIdentifier, type CarrierId } from "@/lib/fmcsa/identifier";
+import { isCarrierLookupError, redactWebKey } from "@/lib/fmcsa/errors";
+import { checkRateLimit, clientKeyFromHeaders } from "@/lib/rate-limit";
+
+/** The example the README and the landing page both point at. */
+const EXAMPLE_DOT = "4581509";
+
+interface PageProps {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { q } = await searchParams;
+  const query = q?.trim();
+  if (!query) return {};
+  const parsed = parseCarrierIdentifier(query);
+  return { title: parsed.ok ? parsed.id.display : "Search" };
+}
+
+export default async function Home({ searchParams }: PageProps) {
+  const { q } = await searchParams;
+  const query = q?.trim() ?? "";
+  const parsed = query.length > 0 ? parseCarrierIdentifier(query) : null;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:py-12">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          FMCSA Carrier Check
+        </h1>
+        <p className="mt-1.5 text-muted">
+          Operating authority, insurance filings, safety rating and 24-month
+          inspection history for any US motor carrier, from FMCSA&rsquo;s public
+          data.
+        </p>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+      <SearchForm initialQuery={query || undefined} />
+
+      <main id="main" className="flex flex-col gap-4">
+        {parsed === null ? (
+          <Landing />
+        ) : !parsed.ok ? (
+          <InvalidInputPanel message={parsed.message} />
+        ) : (
+          <Suspense key={query} fallback={<ReportSkeleton />}>
+            <Results id={parsed.id} query={query} />
+          </Suspense>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <Footer />
     </div>
+  );
+}
+
+/**
+ * The async boundary. Everything slow lives below this component, so the
+ * header and the search box paint immediately and the skeleton streams in
+ * underneath while FMCSA is thinking.
+ */
+async function Results({ id, query }: { id: CarrierId; query: string }) {
+  const limit = checkRateLimit(clientKeyFromHeaders(await headers()));
+  if (!limit.allowed) {
+    return (
+      <ErrorPanel
+        kind="rate-limited"
+        query={query}
+        detail={`Try again in ${limit.retryAfterSeconds}s.`}
+      />
+    );
+  }
+
+  try {
+    const record = await lookupCarrier(id);
+    return <CarrierReport record={record} />;
+  } catch (error) {
+    if (isCarrierLookupError(error)) {
+      return (
+        <ErrorPanel
+          kind={error.kind}
+          query={query}
+          detail={redactWebKey(error.message)}
+        />
+      );
+    }
+    // Anything not already classified is a bug in this app rather than a
+    // known failure of the upstream API. Re-throw so it reaches error.tsx and
+    // the logs, instead of being disguised as an FMCSA problem.
+    throw error;
+  }
+}
+
+function Landing() {
+  return (
+    <div className="flex flex-col gap-4">
+      <section className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+        <h2 className="font-semibold">What this checks</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+          <li>
+            Operating authority — common, contract and broker — and whether the
+            carrier is allowed to operate at all
+          </li>
+          <li>
+            Liability, cargo and bond insurance filings, against what the carrier
+            is required to carry
+          </li>
+          <li>Safety rating and the compliance review it came from</li>
+          <li>
+            24 months of driver and vehicle inspections, out-of-service rates
+            against the national average, and crash counts
+          </li>
+        </ul>
+        <p className="mt-3 text-sm">
+          Try{" "}
+          <a
+            href={`/?q=${EXAMPLE_DOT}`}
+            className="font-medium text-accent underline underline-offset-2"
+          >
+            USDOT {EXAMPLE_DOT}
+          </a>{" "}
+          — Fast Line Logistics LLC.
+        </p>
+      </section>
+
+      <section className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+        <h2 className="font-semibold">What it is not</h2>
+        <p className="mt-2 text-sm">
+          Insurance shown here is a <em>filing FMCSA holds</em>, not proof of
+          current coverage — cancellations reach FMCSA on a delay. Crash counts
+          are not fault-adjusted. Nothing here detects double-brokering or
+          identity theft, which is where most freight fraud actually happens.
+          This is a fast first pass, not a carrier packet.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mt-auto border-t border-border pt-4 text-xs text-muted">
+      <p>
+        Data from the{" "}
+        <a
+          className="underline underline-offset-2"
+          href="https://mobile.fmcsa.dot.gov/QCDevsite/"
+          rel="noreferrer noopener"
+        >
+          FMCSA QCMobile API
+        </a>
+        . Not affiliated with or endorsed by the Federal Motor Carrier Safety
+        Administration.
+      </p>
+    </footer>
   );
 }
