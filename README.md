@@ -1,5 +1,8 @@
 # FMCSA Carrier Check
 
+[![CI](https://github.com/yurii1exe/fmcsa-carrier-check/actions/workflows/ci.yml/badge.svg)](https://github.com/yurii1exe/fmcsa-carrier-check/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Enter a USDOT or MC number, get the carrier's operating authority, insurance
 filings, safety rating and 24-month inspection and crash history — from FMCSA's
 public data, on one page.
@@ -12,7 +15,7 @@ free and public; what you pay for is the packaging. This is the packaging.
 Next.js 15 (App Router) · TypeScript · Tailwind 4 · FMCSA QCMobile API
 ```
 
-Example lookup: [`/?q=4581509`](/?q=4581509) — FAST LINE LOGISTICS LLC.
+Example lookup: `/?q=4581509` — FAST LINE LOGISTICS LLC.
 
 ---
 
@@ -136,11 +139,12 @@ It is an in-memory fixed window: per serverless instance, not global, and it
 resets on cold start. A speed bump, not a security control — `rate-limit.ts`
 says so where it is implemented.
 
-**Errors are eight distinct states**, not one. Invalid input, carrier not found,
-key missing, key rejected, rate limited, FMCSA 5xx, timeout, unreadable
-response. They differ because the reader's next move differs: check the number,
-wait a minute, or tell whoever deployed this. Collapsing them into "something
-went wrong" throws away the only useful part.
+**Errors are nine distinct states**, not one. Invalid input, carrier not found,
+key missing, key rejected, rate limited, FMCSA 5xx, timeout, FMCSA unreachable,
+unreadable response. They differ because the reader's next move differs: check
+the number, wait a minute, or tell whoever deployed this. Collapsing them into
+"something went wrong" throws away the only useful part. A retry button appears
+only on the four where retrying could plausibly work.
 
 **Nothing is typed `any`.** API responses come in as `unknown` and are narrowed
 by hand in `src/lib/fmcsa/parse.ts`, which tolerates the shapes the API actually
@@ -178,8 +182,9 @@ copied verbatim, because its exact shape is the point.
 
 ## Accessibility and mobile
 
-Single column, works from 320px up. Every status is a text label as well as a
-colour, so severity survives greyscale, colour blindness and a screenshot.
+Single column below 640px, and nothing in the layout has a fixed width. Every
+status is a text label as well as a colour, so severity survives greyscale,
+colour blindness and a screenshot.
 Label/value pairs are `<dl>` markup. The loading state is a `role="status"`
 region with a text announcement rather than a set of empty boxes. Skip link,
 visible focus rings, and a search form that submits without JavaScript.
