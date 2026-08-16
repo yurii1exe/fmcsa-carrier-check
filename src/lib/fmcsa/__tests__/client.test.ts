@@ -128,6 +128,16 @@ describe("lookupCarrier", () => {
     await expectKind(lookupCarrier(DOT), "unauthorized");
   });
 
+  it("recognises the other 404 wording FMCSA uses for a key problem", async () => {
+    // "Must provide Webkey" rather than "Webkey not found". Same HTTP status,
+    // same class of problem, different sentence.
+    const { lookupCarrier } = await importClient();
+    const { webkeyMissing } = await import("./fixtures");
+    fetchMock.mockResolvedValue(jsonResponse(404, webkeyMissing));
+
+    await expectKind(lookupCarrier(DOT), "unauthorized");
+  });
+
   it("reports a genuine 404 as not-found", async () => {
     const { lookupCarrier } = await importClient();
     fetchMock.mockResolvedValue(jsonResponse(404, { content: null }));
