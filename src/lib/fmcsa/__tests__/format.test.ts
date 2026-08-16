@@ -6,6 +6,7 @@ import {
   formatCount,
   formatDate,
   formatDollars,
+  formatIdentifier,
   formatRate,
 } from "../format";
 import { parseCarrier } from "../parse";
@@ -31,6 +32,17 @@ describe("formatDate", () => {
   it("returns null for an absent date", () => {
     expect(formatDate(null)).toBeNull();
     expect(formatDate("")).toBeNull();
+  });
+});
+
+describe("formatIdentifier", () => {
+  it("leaves a USDOT number unseparated", () => {
+    // A DOT number is an identifier. "4,581,509" reads as a typo.
+    expect(formatIdentifier(4581509)).toBe("4581509");
+  });
+
+  it("shows a dash for an absent number", () => {
+    expect(formatIdentifier(null)).toBe("—");
   });
 });
 

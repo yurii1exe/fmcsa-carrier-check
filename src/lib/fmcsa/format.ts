@@ -65,6 +65,17 @@ export function formatRate(value: number | null): string {
 }
 
 /**
+ * A USDOT or docket number is an identifier, not a quantity.
+ *
+ * `formatCount` would render 4581509 as `4,581,509`, which no carrier packet,
+ * load board or insurance certificate has ever done, and which reads as a
+ * typo to anyone who works with these numbers daily.
+ */
+export function formatIdentifier(value: number | null): string {
+  return value === null ? "—" : String(value);
+}
+
+/**
  * `bipdRequiredAmount` arrives as a bare number of dollars in a string, e.g.
  * `"750000"`. Rendered as currency it is immediately readable as the familiar
  * $750,000 minimum; left raw it is a wall of digits.

@@ -8,6 +8,7 @@ import {
   formatCount,
   formatDate,
   formatDollars,
+  formatIdentifier,
   formatRate,
 } from "@/lib/fmcsa/format";
 import { Card, Field, FieldList, Pill, type PillTone } from "./ui";
@@ -27,7 +28,10 @@ export function CarrierReport({ record }: { record: CarrierRecord }) {
           <p className="text-muted">Doing business as {carrier.dbaName}</p>
         ) : null}
         <FieldList>
-          <Field label="USDOT number" value={formatCount(carrier.dotNumber)} />
+          <Field
+            label="USDOT number"
+            value={formatIdentifier(carrier.dotNumber)}
+          />
           <Field
             label="Operation"
             value={
