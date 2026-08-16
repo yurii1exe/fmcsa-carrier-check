@@ -8,15 +8,30 @@
  * counts, the nulls — and no number in this file should be read as a fact
  * about any real carrier.
  *
- * The one exception is `webkeyNotFound`, which is a verbatim copy of a real
- * response body observed on 2026-08-15 by sending a junk webKey. It is
- * reproduced because its exact shape is the whole point: an authentication
- * failure arrives as an HTTP 404 with a string where the data should be.
+ * The exceptions are `webkeyNotFound` and `webkeyMissing`, which are verbatim
+ * copies of real response bodies. They are reproduced because their exact
+ * shape is the whole point: an authentication failure arrives as an HTTP 404
+ * with a string where the data should be.
  */
 
+/** Observed for `?webKey=<junk>` on 2026-08-15, and again on 2026-08-16. */
 export const webkeyNotFound = {
   content: "Webkey not found",
   retrievalDate: "2026-08-15T21:50:59.319+0000",
+  _links: {
+    self: { href: "https://mobile.fmcsa.dot.gov/qc" },
+  },
+};
+
+/**
+ * Observed 2026-08-16 for a request with the `webKey` parameter omitted
+ * altogether. Also an HTTP 404, and a *different* sentence from the one above
+ * — which is why `isAuthFailureMessage` matches on the word "webkey" rather
+ * than on either literal string.
+ */
+export const webkeyMissing = {
+  content: "Must provide Webkey",
+  retrievalDate: "2026-08-16T15:46:04.443+0000",
   _links: {
     self: { href: "https://mobile.fmcsa.dot.gov/qc" },
   },

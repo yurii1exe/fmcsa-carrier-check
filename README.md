@@ -119,7 +119,7 @@ cp .env.example .env.local     # then add your webKey
 npm run dev
 ```
 
-Get a webKey free: [FMCSA developer portal](https://mobile.fmcsa.dot.gov/QCDevsite/)
+Get a webKey free: [FMCSA developer portal](https://mobile.fmcsa.dot.gov/QCDevsite/docs/getStarted)
 → sign in with Login.gov → **My WebKeys** → **Get a new WebKey**. No FMCSA
 registration, no cost, a couple of minutes.
 
@@ -127,11 +127,14 @@ Without a key the app still runs and tells you exactly what is missing and how
 to fix it, rather than crashing or showing an empty page.
 
 ```bash
-npm test          # 105 tests
+npm test          # 114 tests
 npm run typecheck
 npm run lint
 npm run build
 ```
+
+To put it on the internet, see **[DEPLOY.md](DEPLOY.md)** — getting the key,
+setting it in Vercel, and the four URLs to check afterwards.
 
 ---
 
@@ -228,9 +231,33 @@ Data is FMCSA's, and so are its lags and its errors.
 
 **The success path has not yet been run against the live API.** It is built and
 tested against the documented response shapes, and the demo above is recorded
-against those same fixtures. The one path confirmed against the real service is
-the bad-webKey 404 described earlier, whose body is reproduced verbatim in the
-tests. Field-by-field verification against SAFER is the next thing on this repo.
+against those same fixtures. Running it needs a webKey, which is the one thing
+this repository cannot contain.
+
+What *has* been confirmed against the real service, re-checked 2026-08-16 by
+running the built app against `mobile.fmcsa.dot.gov` with a deliberately
+invalid key:
+
+- Both endpoints the app builds — `/carriers/{dot}` and
+  `/carriers/docket-number/{n}` — exist and answer, and both are still listed
+  on the [QCMobile API page](https://mobile.fmcsa.dot.gov/QCDevsite/docs/qcApi).
+- Credential failures arrive as HTTP 404 with a string body, in two different
+  wordings: `Webkey not found` for a bad key and `Must provide Webkey` for no
+  key. Both are reproduced verbatim in the fixtures and both are asserted to
+  produce "FMCSA rejected the API key" rather than "no carrier found".
+- End to end, that path renders the right error panel for both a USDOT and an
+  MC lookup, and the key appears nowhere in the returned HTML.
+
+**One discrepancy worth knowing about before trusting a live result.** FMCSA's
+own [API elements page](https://mobile.fmcsa.dot.gov/QCDevsite/docs/apiElements)
+documents a much smaller field set than `/carriers/{dot}` actually returns, and
+two of the names it does list disagree with what this code reads —
+`allowToOperate` and `phyZip` there, against `allowedToOperate` and
+`phyZipcode` here. The code's spelling matches independent third-party clients
+of the same API, so the documentation page appears to be stale rather than the
+code wrong; but this is unresolved until the success path runs against a real
+key. If a live report comes back with a blank operating status or a missing
+ZIP, that page is the first place to look.
 
 Not affiliated with or endorsed by the Federal Motor Carrier Safety
 Administration.

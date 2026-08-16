@@ -14,6 +14,7 @@ import {
   emptyContent,
   healthyCarrier,
   sparseCarrier,
+  webkeyMissing,
   webkeyNotFound,
 } from "./fixtures";
 
@@ -63,6 +64,15 @@ describe("envelope", () => {
     // bad, not that the carrier is missing.
     const envelope = readEnvelope(webkeyNotFound);
     expect(envelope?.contentMessage).toBe("Webkey not found");
+    expect(isAuthFailureMessage(envelope?.contentMessage ?? null)).toBe(true);
+  });
+
+  it("recognises the omitted-key wording as well as the bad-key wording", () => {
+    // FMCSA uses two different sentences for the same class of failure, both
+    // under an HTTP 404. Pinning only one of them would let the other be
+    // reported to the user as "no carrier with that number".
+    const envelope = readEnvelope(webkeyMissing);
+    expect(envelope?.contentMessage).toBe("Must provide Webkey");
     expect(isAuthFailureMessage(envelope?.contentMessage ?? null)).toBe(true);
   });
 
