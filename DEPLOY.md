@@ -57,12 +57,14 @@ on your own machine than in a serverless log.
 While you are there, read the report rather than just checking that it renders.
 FMCSA's [API elements page](https://mobile.fmcsa.dot.gov/QCDevsite/docs/apiElements)
 is out of step with what `/carriers/{dot}` actually returns, and it spells two
-fields differently from this code (`allowToOperate` / `phyZip` there,
-`allowedToOperate` / `phyZipcode` here). The evidence says the docs page is
-stale, not the code — but a blank **operating status** or a missing **ZIP** on
-an otherwise-populated report is the symptom if it is the other way round, and
-it is much better to find that now than in front of a broker. See the Status
-section of the [README](README.md#status-and-limits).
+fields differently from the way third-party clients of the same API do
+(`allowToOperate` / `phyZip` there, `allowedToOperate` / `phyZipcode` in the
+clients). The parser reads both spellings, so either one produces a populated
+report. What to look for is the **Allowed to operate** row: if it reads **Not
+reported** and the checks carry an *operating authority unknown* warning, the
+value arrived under neither name, and the critical prohibited-carrier check is
+not running. That is worth an hour before the site goes in front of a broker.
+See the Status section of the [README](README.md#status-and-limits).
 
 ## 3. Deploy to Vercel
 

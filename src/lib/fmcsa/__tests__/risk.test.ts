@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { assessCarrier, readAuthority, readSafetyRating } from "../risk";
+import {
+  assessCarrier,
+  readAuthority,
+  readOperatingPermission,
+  readSafetyRating,
+} from "../risk";
 import { parseCarrier } from "../parse";
 import type { FmcsaCarrier } from "../types";
 import { healthyCarrier, sparseCarrier, troubledCarrier } from "./fixtures";
@@ -134,5 +139,86 @@ describe("assessCarrier", () => {
     for (const flag of assessment.flags) {
       expect(flag.source.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("the allowedToOperate field-name disagreement", () => {
+  /**
+   * FMCSA's API elements page spells this field `allowToOperate`. Live
+   * responses and independent third-party clients of the same API spell it
+   * `allowedToOperate`, which is what this code reads first. Since the
+   * disagreement decides whether the *critical* "not allowed to operate" flag
+   * can fire at all, both spellings are accepted and the third case — neither
+   * present — is a reported state rather than a quiet pass.
+   */
+
+  const base = { dotNumber: 1000009, legalName: "EXAMPLE FIELD NAME LLC" };
+
+  function assess(record: Record<string, unknown>) {
+    const carrier = parseCarrier(record);
+    if (!carrier) throw new Error("record did not parse");
+    return { carrier, flags: flagIds(carrier) };
+  }
+
+  it("reads the spelling live responses use", () => {
+    const { carrier, flags } = assess({ ...base, allowedToOperate: "N" });
+    expect(carrier.allowedToOperate).toBe("N");
+    expect(flags).toContain("not-allowed-to-operate");
+    expect(flags).not.toContain("operating-status-unknown");
+  });
+
+  it("reads the spelling FMCSA's own documentation uses", () => {
+    const { carrier, flags } = assess({ ...base, allowToOperate: "N" });
+    expect(carrier.allowedToOperate).toBe("N");
+    expect(flags).toContain("not-allowed-to-operate");
+    expect(flags).not.toContain("operating-status-unknown");
+  });
+
+  it("prefers the live spelling when a record carries both", () => {
+    const { carrier } = assess({
+      ...base,
+      allowedToOperate: "Y",
+      allowToOperate: "N",
+    });
+    expect(carrier.allowedToOperate).toBe("Y");
+  });
+
+  it("reports that the check could not run when neither spelling is present", () => {
+    // The failure this guards against: the field parses to null, the critical
+    // flag never fires, and a prohibited carrier is rendered as unflagged.
+    const carrier = parseCarrier(base);
+    if (!carrier) throw new Error("record did not parse");
+    const assessment = assessCarrier(carrier);
+
+    expect(carrier.allowedToOperate).toBeNull();
+    expect(assessment.flags.map((f) => f.id)).toContain(
+      "operating-status-unknown",
+    );
+    expect(assessment.verdict).not.toBe("clear");
+    expect(assessment.warningCount).toBeGreaterThan(0);
+    expect(
+      assessment.flags.find((f) => f.id === "operating-status-unknown")?.source,
+    ).toContain("allowToOperate");
+  });
+
+  it("stays quiet when the carrier reports that it may operate", () => {
+    const { flags } = assess({ ...base, allowToOperate: "Y" });
+    expect(flags).not.toContain("operating-status-unknown");
+    expect(flags).not.toContain("not-allowed-to-operate");
+  });
+});
+
+describe("readOperatingPermission", () => {
+  it("maps the yes and no wordings the API uses", () => {
+    expect(readOperatingPermission("Y")).toBe("allowed");
+    expect(readOperatingPermission("yes")).toBe("allowed");
+    expect(readOperatingPermission("N")).toBe("not-allowed");
+    expect(readOperatingPermission("No")).toBe("not-allowed");
+  });
+
+  it("returns unknown for an absent or unrecognised value", () => {
+    expect(readOperatingPermission(null)).toBe("unknown");
+    expect(readOperatingPermission("")).toBe("unknown");
+    expect(readOperatingPermission("PENDING")).toBe("unknown");
   });
 });

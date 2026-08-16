@@ -1,6 +1,16 @@
 import type { CarrierRecord } from "@/lib/fmcsa/types";
-import type { RiskAssessment, RiskFlag, Verdict } from "@/lib/fmcsa/risk";
-import { assessCarrier, readAuthority, readSafetyRating } from "@/lib/fmcsa/risk";
+import type {
+  OperatingPermission,
+  RiskAssessment,
+  RiskFlag,
+  Verdict,
+} from "@/lib/fmcsa/risk";
+import {
+  assessCarrier,
+  readAuthority,
+  readOperatingPermission,
+  readSafetyRating,
+} from "@/lib/fmcsa/risk";
 import {
   authorityLabel,
   carrierName,
@@ -16,6 +26,7 @@ import { Card, Field, FieldList, Pill, type PillTone } from "./ui";
 export function CarrierReport({ record }: { record: CarrierRecord }) {
   const { carrier } = record;
   const assessment = assessCarrier(carrier);
+  const permission = readOperatingPermission(carrier.allowedToOperate);
   const address = formatAddress(carrier);
 
   return (
@@ -60,10 +71,11 @@ export function CarrierReport({ record }: { record: CarrierRecord }) {
           <AuthorityField label="Broker" value={carrier.brokerAuthorityStatus} />
           <Field
             label="Allowed to operate"
-            value={
-              <Pill tone={carrier.allowedToOperate === "N" ? "critical" : "ok"}>
-                {carrier.allowedToOperate === "N" ? "No" : "Yes"}
-              </Pill>
+            value={<OperatingPermissionPill permission={permission} />}
+            hint={
+              permission === "unknown"
+                ? "FMCSA returned no value for this field, so this check did not run."
+                : undefined
             }
           />
           <Field
@@ -293,6 +305,28 @@ function InsuranceField({
       hint={requiredAmount ? `Minimum required: ${requiredAmount}` : undefined}
     />
   );
+}
+
+/**
+ * The allowed-to-operate chip, in three states rather than two.
+ *
+ * A field the API never sent must not look like a field that answered "Y".
+ * On a page a broker reads before handing over a load, a check that could not
+ * run has to be visibly different from a check that passed.
+ */
+function OperatingPermissionPill({
+  permission,
+}: {
+  permission: OperatingPermission;
+}) {
+  switch (permission) {
+    case "allowed":
+      return <Pill tone="ok">Yes</Pill>;
+    case "not-allowed":
+      return <Pill tone="critical">No</Pill>;
+    case "unknown":
+      return <Pill tone="warning">Not reported</Pill>;
+  }
 }
 
 function SafetyRatingPill({ value }: { value: string | null }) {

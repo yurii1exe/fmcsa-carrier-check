@@ -5,7 +5,6 @@ import {
   FMCSA_BASE_URL,
   REQUEST_TIMEOUT_MS,
   getWebKey,
-  isConfigured,
 } from "../config";
 
 /**
@@ -33,7 +32,6 @@ describe("getWebKey", () => {
   it("returns null when the variable is absent", () => {
     delete process.env.FMCSA_WEB_KEY;
     expect(getWebKey()).toBeNull();
-    expect(isConfigured()).toBe(false);
   });
 
   it("treats an empty or whitespace-only value as absent", () => {
@@ -41,17 +39,14 @@ describe("getWebKey", () => {
     // question as "usable".
     process.env.FMCSA_WEB_KEY = "";
     expect(getWebKey()).toBeNull();
-    expect(isConfigured()).toBe(false);
 
     process.env.FMCSA_WEB_KEY = "   ";
     expect(getWebKey()).toBeNull();
-    expect(isConfigured()).toBe(false);
   });
 
   it("trims the whitespace a pasted key arrives with", () => {
     process.env.FMCSA_WEB_KEY = "  key-with-a-trailing-newline\n";
     expect(getWebKey()).toBe("key-with-a-trailing-newline");
-    expect(isConfigured()).toBe(true);
   });
 
   it("reads the environment at call time, not at import time", () => {

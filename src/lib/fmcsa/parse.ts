@@ -146,7 +146,15 @@ export function parseCarrier(value: unknown): FmcsaCarrier | null {
     legalName,
     dbaName: asString(value.dbaName),
 
-    allowedToOperate: asString(value.allowedToOperate),
+    // Two spellings, deliberately. FMCSA's API elements page documents this
+    // field as `allowToOperate`; live responses and independent third-party
+    // clients use `allowedToOperate`. The second read is the fallback rather
+    // than the primary because the evidence favours the longer name, and
+    // reading both costs nothing. When neither is present the field stays
+    // null and `risk.ts` raises an explicit "operating authority unknown"
+    // flag — a carrier-vetting tool must not report silence as an all-clear.
+    allowedToOperate:
+      asString(value.allowedToOperate) ?? asString(value.allowToOperate),
     statusCode: asString(value.statusCode),
     oosDate: asString(value.oosDate),
 
@@ -197,7 +205,8 @@ export function parseCarrier(value: unknown): FmcsaCarrier | null {
     phyStreet: asString(value.phyStreet),
     phyCity: asString(value.phyCity),
     phyState: asString(value.phyState),
-    phyZipcode: asString(value.phyZipcode),
+    // Same disagreement, lower stakes: the docs page calls this `phyZip`.
+    phyZipcode: asString(value.phyZipcode) ?? asString(value.phyZip),
     phyCountry: asString(value.phyCountry),
   };
 }

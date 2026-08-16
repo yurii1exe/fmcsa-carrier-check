@@ -43,7 +43,10 @@ export interface FmcsaCarrier {
   legalName: string | null;
   dbaName: string | null;
 
-  // Operating status
+  // Operating status. `allowedToOperate` is the spelling live responses and
+  // third-party clients use; FMCSA's API elements page spells the same field
+  // `allowToOperate`. Both are read in `parse.ts` and land here, and neither
+  // being present is a state `risk.ts` reports rather than swallows.
   allowedToOperate: string | null;
   statusCode: string | null;
   oosDate: string | null;
@@ -103,6 +106,7 @@ export interface FmcsaCarrier {
   phyStreet: string | null;
   phyCity: string | null;
   phyState: string | null;
+  /** `phyZip` on FMCSA's API elements page; both spellings are read. */
   phyZipcode: string | null;
   phyCountry: string | null;
 }

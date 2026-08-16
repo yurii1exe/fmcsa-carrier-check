@@ -162,3 +162,18 @@ describe("toCarrierRecord", () => {
     expect(envelope ? toCarrierRecord(envelope) : null).toBeNull();
   });
 });
+
+describe("the field names FMCSA's documentation disagrees with", () => {
+  // The API elements page lists `allowToOperate` and `phyZip`; live responses
+  // and third-party clients use `allowedToOperate` and `phyZipcode`. Both are
+  // read, so a report is populated either way.
+  const base = { dotNumber: 1000010, legalName: "EXAMPLE ZIP LLC" };
+
+  it("reads the ZIP under either spelling", () => {
+    expect(parseCarrier({ ...base, phyZipcode: "60601" })?.phyZipcode).toBe(
+      "60601",
+    );
+    expect(parseCarrier({ ...base, phyZip: "60601" })?.phyZipcode).toBe("60601");
+    expect(parseCarrier(base)?.phyZipcode).toBeNull();
+  });
+});

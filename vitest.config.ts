@@ -2,6 +2,10 @@ import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
 export default defineConfig({
+  // The app's tsconfig sets `jsx: "preserve"` because Next does the transform.
+  // Vitest has no Next in front of it, so the transform is named here — this
+  // is what lets the component tests be written in JSX like the components.
+  esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
@@ -16,6 +20,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    // `.tsx` as well as `.ts`: the components and the page are rendered to
+    // HTML in the suite, not only the libraries underneath them.
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });

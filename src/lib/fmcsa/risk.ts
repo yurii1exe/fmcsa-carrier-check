@@ -91,6 +91,27 @@ function isNo(value: string | null): boolean {
   return c === "N" || c === "NO" || c === "FALSE";
 }
 
+export type OperatingPermission = "allowed" | "not-allowed" | "unknown";
+
+/**
+ * Read the "allowed to operate" flag — the single field here whose *name* is
+ * in doubt.
+ *
+ * FMCSA's API elements page documents it as `allowToOperate`; live responses
+ * and independent third-party clients of the same API use `allowedToOperate`.
+ * `parse.ts` reads both, and this function turns the result into three states
+ * rather than two. The third one matters: if neither spelling is present, the
+ * prohibited-carrier check has not run, and reporting that as "no problems
+ * found" would be the worst failure this tool could have.
+ */
+export function readOperatingPermission(
+  value: string | null,
+): OperatingPermission {
+  if (isNo(value)) return "not-allowed";
+  if (isYes(value)) return "allowed";
+  return "unknown";
+}
+
 /** Insurance "on file" fields are counts of filings, sent as strings. */
 function filingCount(value: string | null): number | null {
   return asNumber(value);
@@ -105,7 +126,9 @@ export function assessCarrier(carrier: FmcsaCarrier): RiskAssessment {
 
   /* --- Can it legally move freight at all? ------------------------------- */
 
-  if (isNo(carrier.allowedToOperate)) {
+  const permission = readOperatingPermission(carrier.allowedToOperate);
+
+  if (permission === "not-allowed") {
     flags.push({
       id: "not-allowed-to-operate",
       severity: "critical",
@@ -113,6 +136,18 @@ export function assessCarrier(carrier: FmcsaCarrier): RiskAssessment {
       detail:
         "FMCSA records this carrier as not permitted to operate. Do not tender a load against this record.",
       source: "allowedToOperate",
+    });
+  } else if (permission === "unknown") {
+    // Silence here is not a pass. If the field is absent under both spellings
+    // the prohibited-carrier check never ran, and the reader has to be told
+    // that rather than shown a report with one fewer flag on it.
+    flags.push({
+      id: "operating-status-unknown",
+      severity: "warning",
+      title: "Operating authority unknown",
+      detail:
+        "This record carries no allowed-to-operate value under either spelling FMCSA uses for the field, so the check for a prohibited carrier could not run. Absence of the flag is not evidence the carrier may operate — confirm it in SAFER before tendering a load.",
+      source: "allowedToOperate, allowToOperate",
     });
   }
 

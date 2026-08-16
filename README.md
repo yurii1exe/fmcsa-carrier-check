@@ -33,6 +33,13 @@ public data, on one page.
 >   inspections — is suppressed under the five-inspection floor. Every check
 >   prints the API fields it read underneath itself.
 
+**Lookups in this repository run against fixtures.** The app is built and
+tested against the documented QCMobile response shapes, and the success path
+has not yet been run against the live API — that needs a free FMCSA webKey,
+which is the one thing this repository cannot contain. The credential-failure
+path *has* been run against `mobile.fmcsa.dot.gov`; what is confirmed and what
+is still open is set out in [Status and limits](#status-and-limits).
+
 Brokers and 3PLs vet carriers before every load. The commercial tools that do
 this — Highway, RMIS, Carrier411 — are subscriptions. The underlying data is
 free and public; what you pay for is the packaging. This is the packaging.
@@ -127,7 +134,7 @@ Without a key the app still runs and tells you exactly what is missing and how
 to fix it, rather than crashing or showing an empty page.
 
 ```bash
-npm test          # 114 tests
+npm test          # 188 tests
 npm run typecheck
 npm run lint
 npm run build
@@ -197,11 +204,22 @@ src/app/page.tsx  one route; slow work sits below a Suspense boundary
 
 ### Tests
 
-105 across seven files, concentrated where a change at FMCSA would break things
-silently: response parsing, the error mapping in the client, and the risk rules.
+188 across eleven files, concentrated where a change at FMCSA would break
+things silently: response parsing, the error mapping in the client, and the
+risk rules.
 `client.test.ts` mocks `fetch` and asserts on the full HTTP matrix — 200 with a
 carrier, 200 with null content, 404 for a real miss, 404 for a bad webKey, 401,
 403, 429, 5xx, an HTML error page, a timeout and a connection failure.
+
+The components and the page are rendered to HTML in the suite as well, with no
+browser and no extra dependency: these are server components, so the markup
+they return is the whole of their behaviour. `ErrorPanel.test.tsx` covers all
+eight failure panels and which of them offer a retry; `CarrierReport.test.tsx`
+renders the fixtures and asserts on the copy a broker reads; `page.test.tsx`
+renders the landing state, the invalid-input state, and the three degraded
+states a visitor can actually hit — no webKey configured, rate limited, and
+FMCSA returning 5xx — checking each renders its own panel and that no request
+is made where none should be.
 
 Fixtures are synthetic and labelled as such; the carriers in them are invented.
 The single exception is the `Webkey not found` body, which is a real response
@@ -248,16 +266,23 @@ invalid key:
 - End to end, that path renders the right error panel for both a USDOT and an
   MC lookup, and the key appears nowhere in the returned HTML.
 
-**One discrepancy worth knowing about before trusting a live result.** FMCSA's
-own [API elements page](https://mobile.fmcsa.dot.gov/QCDevsite/docs/apiElements)
+**FMCSA's documentation and the API's third-party clients disagree about two
+field names.** The [API elements page](https://mobile.fmcsa.dot.gov/QCDevsite/docs/apiElements)
 documents a much smaller field set than `/carriers/{dot}` actually returns, and
-two of the names it does list disagree with what this code reads —
-`allowToOperate` and `phyZip` there, against `allowedToOperate` and
-`phyZipcode` here. The code's spelling matches independent third-party clients
-of the same API, so the documentation page appears to be stale rather than the
-code wrong; but this is unresolved until the success path runs against a real
-key. If a live report comes back with a blank operating status or a missing
-ZIP, that page is the first place to look.
+two of the names it does list are spelled differently there from the way
+independent clients of the same API spell them — `allowToOperate` and
+`phyZip` on the docs page, `allowedToOperate` and `phyZipcode` in the clients.
+The evidence favours the longer names, and the parser reads **both** rather
+than betting on that reading, because the first of the two fields is what
+raises the critical *not allowed to operate* flag.
+
+That still leaves the case where neither spelling is present, and it is the
+case that matters: a field that parses to null would mean the critical check
+never runs. So the report treats it as a state of its own — **operating
+authority unknown**: a warning flag naming both field names, an **Allowed to
+operate — Not reported** row instead of a green "Yes", and a verdict of *check
+before dispatch* rather than *no flags raised*. A carrier-vetting tool must
+never imply "no problems found" when it could not read the field.
 
 Not affiliated with or endorsed by the Federal Motor Carrier Safety
 Administration.

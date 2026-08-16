@@ -32,7 +32,3 @@ export function getWebKey(): string | null {
   const key = process.env.FMCSA_WEB_KEY?.trim();
   return key && key.length > 0 ? key : null;
 }
-
-export function isConfigured(): boolean {
-  return getWebKey() !== null;
-}
