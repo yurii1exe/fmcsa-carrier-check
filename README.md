@@ -7,6 +7,32 @@ Enter a USDOT or MC number, get the carrier's operating authority, insurance
 filings, safety rating and 24-month inspection and crash history — from FMCSA's
 public data, on one page.
 
+![A carrier name typed into the search box is rejected before any API call; USDOT 4581509 is then looked up, the skeleton streams in under the already-painted form, and the report renders with its checks](docs/demo.gif)
+
+> **The carrier data in that recording is a fixture, not a live FMCSA
+> response.** No webKey was used to make it. The app was pointed at a local stub
+> serving [`docs/demo-fixture.json`](docs/demo-fixture.json) — a synthetic record
+> built to the documented QCMobile field names. The subject is my own carrier,
+> FAST LINE LOGISTICS LLC / USDOT 4581509, so that no third party is shown with
+> invented compliance data; every figure against it — inspections,
+> out-of-service rates, insurance filings — is made up to exercise the
+> rendering and is not a fact about that carrier or any other. Everything else
+> in the frame is real: the same identifier parsing, the same risk rules, the
+> same components, the same streaming.
+>
+> Three things in it are worth watching, because they are the judgement calls
+> rather than the layout:
+>
+> - A carrier name is rejected as invalid input **before a request is made** —
+>   name search is a different endpoint and is not supported yet, so the door is
+>   labelled rather than left ajar.
+> - The missing safety rating is filed as a **Note**, not a warning. Unrated is
+>   the normal state for a carrier that has never had an on-site review.
+> - Both out-of-service rates in the fixture sit above the national average, and
+>   **only the vehicle one raises a flag**. The driver rate — 33.3% on three
+>   inspections — is suppressed under the five-inspection floor. Every check
+>   prints the API fields it read underneath itself.
+
 Brokers and 3PLs vet carriers before every load. The commercial tools that do
 this — Highway, RMIS, Carrier411 — are subscriptions. The underlying data is
 free and public; what you pay for is the packaging. This is the packaging.
@@ -101,7 +127,7 @@ Without a key the app still runs and tells you exactly what is missing and how
 to fix it, rather than crashing or showing an empty page.
 
 ```bash
-npm test          # 103 tests
+npm test          # 105 tests
 npm run typecheck
 npm run lint
 npm run build
@@ -168,7 +194,7 @@ src/app/page.tsx  one route; slow work sits below a Suspense boundary
 
 ### Tests
 
-103 across seven files, concentrated where a change at FMCSA would break things
+105 across seven files, concentrated where a change at FMCSA would break things
 silently: response parsing, the error mapping in the client, and the risk rules.
 `client.test.ts` mocks `fetch` and asserts on the full HTTP matrix — 200 with a
 carrier, 200 with null content, 404 for a real miss, 404 for a bad webKey, 401,
@@ -199,6 +225,12 @@ fraud actually happens. It is a fast first pass, not a carrier packet, and not a
 replacement for a certificate of insurance from the agent.
 
 Data is FMCSA's, and so are its lags and its errors.
+
+**The success path has not yet been run against the live API.** It is built and
+tested against the documented response shapes, and the demo above is recorded
+against those same fixtures. The one path confirmed against the real service is
+the bad-webKey 404 described earlier, whose body is reproduced verbatim in the
+tests. Field-by-field verification against SAFER is the next thing on this repo.
 
 Not affiliated with or endorsed by the Federal Motor Carrier Safety
 Administration.

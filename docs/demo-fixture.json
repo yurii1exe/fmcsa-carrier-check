@@ -1,0 +1,73 @@
+{
+  "_comment": [
+    "SYNTHETIC FIXTURE — this is not a live FMCSA response and no number in it is a",
+    "fact about any real carrier. It is the exact body fed to the app to record",
+    "docs/demo.gif, served from a local stub in place of the QCMobile API. The",
+    "field names and shapes follow the documentation at mobile.fmcsa.dot.gov/QCDevsite;",
+    "the values are invented to exercise three rendering paths at once: a null",
+    "safetyRating (rendered as a note, not a warning), a driver out-of-service rate",
+    "above the national average on only 3 inspections (suppressed, below the 5-",
+    "inspection floor), and a vehicle out-of-service rate above the national average",
+    "on 9 inspections (flagged). FAST LINE LOGISTICS LLC / USDOT 4581509 is the",
+    "author's own carrier and is used as the subject so that no third party is",
+    "depicted with invented compliance data.",
+    "bipdRequiredAmount is deliberately absent: whether QCMobile sends that field in",
+    "dollars or in thousands is not yet confirmed against the live API, so the demo",
+    "does not display a number it cannot vouch for."
+  ],
+  "content": {
+    "carrier": {
+      "allowedToOperate": "Y",
+      "statusCode": "A",
+      "oosDate": null,
+      "dotNumber": 4581509,
+      "legalName": "FAST LINE LOGISTICS LLC",
+      "dbaName": null,
+      "commonAuthorityStatus": "A",
+      "contractAuthorityStatus": "N",
+      "brokerAuthorityStatus": "N",
+      "bipdInsuranceOnFile": "1",
+      "bipdInsuranceRequired": "Y",
+      "cargoInsuranceOnFile": "1",
+      "cargoInsuranceRequired": "Y",
+      "bondInsuranceOnFile": "0",
+      "bondInsuranceRequired": "N",
+      "safetyRating": null,
+      "safetyRatingDate": null,
+      "reviewDate": null,
+      "reviewType": null,
+      "crashTotal": 0,
+      "fatalCrash": 0,
+      "injCrash": 0,
+      "towawayCrash": 0,
+      "driverInsp": 3,
+      "driverOosInsp": 1,
+      "driverOosRate": 33.33,
+      "driverOosRateNationalAverage": "6.72",
+      "vehicleInsp": 9,
+      "vehicleOosInsp": 3,
+      "vehicleOosRate": 33.33,
+      "vehicleOosRateNationalAverage": "22.05",
+      "hazmatInsp": 0,
+      "hazmatOosInsp": 0,
+      "hazmatOosRate": 0,
+      "hazmatOosRateNationalAverage": "4.5",
+      "oosRateNationalAverageYear": "2009-2010",
+      "totalPowerUnits": 2,
+      "totalDrivers": 2,
+      "carrierOperation": {
+        "carrierOperationCode": "A",
+        "carrierOperationDesc": "Interstate"
+      },
+      "censusTypeId": {
+        "censusType": "C",
+        "censusTypeDesc": "CARRIER",
+        "censusTypeId": 1
+      },
+      "isPassengerCarrier": "N",
+      "mcs150Outdated": "N",
+      "snapshotDate": "2026-07-01"
+    }
+  },
+  "retrievalDate": "2026-08-15T12:00:00.000+0000"
+}
