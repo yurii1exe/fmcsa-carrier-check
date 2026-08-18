@@ -287,6 +287,37 @@ never imply "no problems found" when it could not read the field.
 Not affiliated with or endorsed by the Federal Motor Carrier Safety
 Administration.
 
+## Demo media
+
+One recording and five captures, in `docs/`, all taken against
+[`docs/demo-fixture.json`](docs/demo-fixture.json). The published video and its poster are cut
+from the recording; the published stills are captures of the running app.
+
+| Source | What it shows | Published as |
+|---|---|---|
+| `docs/demo.gif` | 860×1080, 24s. A carrier name refused in the page before any request is made, then USDOT 4581509 looked up and the report streaming in under the already-painted form | `lookup.mp4`, `lookup.webm`, and the poster `lookup.webp` |
+| `docs/carrier-report.png` | 2240×2246. A completed USDOT lookup, with the fixture banner across the top of the page | `carrier-report.webp` |
+| `docs/checks-panel.png` | 1528×728. The checks, each with its severity chip and the FMCSA field names it read printed under it | `checks-panel.webp` |
+| `docs/insurance-safety-rating.png` | 1528×1126. Insurance filings and safety rating, each card carrying the caveat that goes with the field | `insurance-safety-rating.webp` |
+| `docs/inspections-crashes.png` | 1528×574. Inspection and crash counts, each out-of-service rate set against the national average | `inspections-crashes.webp` |
+| `docs/name-rejected.png` | 1528×588. A carrier name refused in the page, before any request is made | `name-rejected.webp` |
+
+**Recapturing the stills** takes a local harness that is not in this repository.
+`FMCSA_BASE_URL` is a constant in [`src/lib/fmcsa/config.ts`](src/lib/fmcsa/config.ts), and no
+component renders the fixture banner. Three things go in locally for a recapture: an environment
+override for the base URL, a stub serving [`docs/demo-fixture.json`](docs/demo-fixture.json) on
+the QCMobile paths, and the banner behind a flag.
+
+The published files live in the site repository under
+`TheSite/ClientApp/src/assets/portfolio/fmcsa-carrier-check/`, with the card thumbnail
+`fmcsa-carrier-check.webp` one directory above. Provenance runs two ways and this repository holds
+the source for both. The video and its poster are produced from `docs/demo.gif` with ffmpeg — mp4
+and webm, a webp poster beside them. The stills are Playwright captures of the running app,
+converted to webp with ffmpeg. Every derivative is regenerated rather than edited.
+
+They feed the `fmcsa-carrier-check` entry on disit.tech/work, whose case study is at
+`/services/software-development/fmcsa-carrier-check`.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
